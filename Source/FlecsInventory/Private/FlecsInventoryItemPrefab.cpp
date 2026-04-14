@@ -14,11 +14,5 @@ void UFlecsInventoryItemPrefab::SetInstanceComponents(flecs::entity& Entity) con
 		.MaxStackAmount = MaxStackAmount,
 	});
 
-	for (auto Archetype : Archetypes)
-	{
-		if (const auto* Ptr = Archetype.GetPtr())
-		{
-			Ptr->SetArchetypeOnEntity(Entity);
-		}
-	}
+	Archetypes.AddBundleToEntity(Entity);
 }

@@ -52,3 +52,23 @@ struct FFlecsAssortedTags : public FFlecsArchetypeBase
 		}
 	}
 };
+
+USTRUCT(BlueprintType)
+struct FFlecsArchetypeBundle
+{
+	GENERATED_BODY()
+
+	UPROPERTY(BlueprintReadWrite, EditAnywhere)
+	TArray<TInstancedStruct<FFlecsArchetypeBase	>> Archetypes = {};
+
+	FORCEINLINE void AddBundleToEntity(const flecs::entity Entity) const
+	{
+		for (const auto& Archetype : Archetypes)
+		{
+			if (const auto* Ptr = Archetype.GetPtr())
+			{
+				Ptr->SetArchetypeOnEntity(Entity);
+			}
+		}
+	}
+};

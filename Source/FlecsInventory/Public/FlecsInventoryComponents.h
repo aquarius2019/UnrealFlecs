@@ -13,6 +13,7 @@ struct FLECSINVENTORY_API FlecsInventoryComponents
 	FlecsInventoryComponents(flecs::world& FlecsWorld);
 };
 
+REG_FLECS_COMPONENT(FFlecsInventoryItemSize)
 USTRUCT(BlueprintType)
 struct FLECSINVENTORY_API FFlecsInventoryItemSize
 {
@@ -44,6 +45,7 @@ struct FLECSINVENTORY_API FFlecsInventoryItemSize
 	bool operator==(const FFlecsInventoryItemSize& Other) const { return Width == Other.Width && Height == Other.Height; }
 };
 
+REG_FLECS_COMPONENT(FFlecsInventoryItemInfo)
 USTRUCT(BlueprintType)
 struct FLECSINVENTORY_API FFlecsInventoryItemInfo
 {
@@ -62,8 +64,7 @@ struct FLECSINVENTORY_API FFlecsInventoryItemInfo
 	int32 MaxStackAmount = 1;
 };
 
-
-//REG_FLECS_COMPONENT(FContainedBy)
+REG_FLECS_COMPONENT(FContainedBy)
 USTRUCT(BlueprintType)
 struct FLECSINVENTORY_API FContainedBy
 {

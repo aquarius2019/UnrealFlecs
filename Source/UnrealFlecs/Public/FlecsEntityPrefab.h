@@ -16,7 +16,7 @@ class UNREALFLECS_API UFlecsEntityPrefab : public UPrimaryDataAsset
 public:
 	virtual void SetInstanceComponents(flecs::entity& Entity) const {}
 	
-	flecs::entity CreateInstance(const flecs::world& FlecsWorld, FFlecsPrefabRegistry& Registry) const;
+	flecs::entity CreateInstance(const flecs::world& World, FFlecsPrefabRegistry& Registry) const;
 
 	TArray<flecs::entity> BatchCreateInstances(const flecs::world& FlecsWorld, FFlecsPrefabRegistry& Registry, int32 Count) const;
 
@@ -33,41 +33,13 @@ protected:
 
 struct FFlecsPrefabRegistry
 {
-	FFlecsPrefabRegistry(const int32 ReserveAmount)
+	explicit FFlecsPrefabRegistry(const int32 ReserveAmount)
 	{
 		Prefabs.Reserve(ReserveAmount);
 	}
 	
-	flecs::entity GetOrCreate(const flecs::world& FlecsWorld, const UFlecsEntityPrefab* Asset)
-	{
-		if (!IsValid(Asset)) { return flecs::entity(); }
-
-		const FPrimaryAssetId AssetId = Asset->GetPrimaryAssetId();
-		
-		flecs::entity Prefab;
-		
-		if (const auto* Found = Prefabs.Find(AssetId))
-		{
-			Prefab = *Found;
-		}
-
-		if (!Prefab.is_alive())
-		{
-			Prefab = Asset->CreatePrefab(FlecsWorld);
-
-			if (Prefab.is_alive())
-			{
-				Prefabs.Add(AssetId, Prefab);
-			}
-			else
-			{
-				Prefabs.Remove(AssetId);
-			}
-		}
-
-		return Prefab;
-	}
-
+	flecs::entity GetOrCreate(const flecs::world& FlecsWorld, const UFlecsEntityPrefab* Asset);
+	
 private:
 	TMap<FPrimaryAssetId, flecs::entity> Prefabs;
 };

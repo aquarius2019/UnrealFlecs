@@ -2,12 +2,10 @@
 
 #pragma once
 
-#include "CoreMinimal.h"
 #include "FlecsArchetypeBase.h"
 #include "FlecsEntityPrefab.h"
 #include "FlecsInventoryComponents.h"
 #include "GameplayTagContainer.h"
-#include "StructUtils/InstancedStruct.h"
 #include "FlecsInventoryItemPrefab.generated.h"
 
 /**
@@ -37,8 +35,8 @@ public:
 	UPROPERTY(BlueprintReadOnly, EditDefaultsOnly)
 	int32 MaxStackAmount = 1;
 
-	UPROPERTY(BlueprintReadOnly, EditDefaultsOnly)
-	TArray<TInstancedStruct<FFlecsArchetypeBase>> Archetypes = {};
-	
+	UPROPERTY(BlueprintReadOnly, EditDefaultsOnly, meta=(ShowOnlyInnerProperties))
+	FFlecsArchetypeBundle Archetypes = {};
+
 	virtual void SetInstanceComponents(flecs::entity& Entity) const override;
 };

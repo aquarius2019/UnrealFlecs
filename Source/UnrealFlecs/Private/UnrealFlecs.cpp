@@ -1,7 +1,6 @@
 // Copyright Epic Games, Inc. All Rights Reserved.
 
 #include "UnrealFlecs.h"
-
 #include "FlecsTypeRegistry.h"
 #include "Modules/ModuleManager.h"
 
@@ -13,7 +12,7 @@ void FUnrealFlecsModule::StartupModule()
 {
 	FCoreDelegates::OnAllModuleLoadingPhasesComplete.AddLambda([]()
 	{
-		FFlecsTypeRegistry::Get().FlushRegistrationQueue();
+		//FFlecsTypeRegistry::Get().FlushRegistrationQueue();
 	});
 }
 

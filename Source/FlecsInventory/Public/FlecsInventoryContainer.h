@@ -12,7 +12,7 @@ enum class EFlecsInventoryContainerType : uint8
 };
 
 REG_FLECS_COMPONENT(FFlecsInventoryItemStack)
-USTRUCT(BlueprintType)
+USTRUCT(BlueprintType, meta=(FlecsComponent))
 struct FLECSINVENTORY_API FFlecsInventoryItemStack
 {
 	GENERATED_BODY()
@@ -30,6 +30,7 @@ struct FLECSINVENTORY_API FFlecsInventoryItemStack
 	UFlecs::HashSet<flecs::entity> Items = {};
 };
 
+REG_FLECS_COMPONENT(FFlecsInventoryContainer)
 USTRUCT(BlueprintType)
 struct FLECSINVENTORY_API FFlecsInventoryContainer
 {
@@ -74,7 +75,7 @@ private:
 	bool EquipItem(const flecs::entity& Inventory, const flecs::entity& Item, const FFlecsInventoryItemInfo& ItemInfo);
 };
 
-//REG_FLECS_COMPONENT(FFlecsInventoryComponent)
+REG_FLECS_COMPONENT(FFlecsInventoryComponent)
 USTRUCT(BlueprintType)
 struct FLECSINVENTORY_API FFlecsInventoryComponent
 {

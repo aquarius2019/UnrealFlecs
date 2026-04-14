@@ -1,7 +1,5 @@
 ﻿#pragma once
 
-#include <ranges>
-
 #include "flecs.h"
 #include "JsonObjectConverter.h"
 #include "UnrealFlecs.h"
@@ -12,9 +10,9 @@
 struct UNREALFLECS_API FFlecsTypeRegistry
 {
 	using RegisterFn = void(*)(const flecs::world&);
-	using SetFn = void(*)(const flecs::entity&, const FConstStructView);
-	using AddFn = void(*)(const flecs::entity&);
-	using GetFn = FConstStructView(*)(const flecs::entity&);
+	using SetFn = void(*)(const flecs::entity, const FConstStructView);
+	using AddFn = void(*)(const flecs::entity);
+	using GetFn = FConstStructView(*)(const flecs::entity);
 	using IDFn  = flecs::id(*)(const flecs::world&);
 	using EnqueuedFn = void(*)(FFlecsTypeRegistry&);
 
@@ -30,12 +28,15 @@ struct UNREALFLECS_API FFlecsTypeRegistry
 		return Instance;
 	}
 
-	static void RegisterAllTypes(const flecs::world& FlecsWorld)
+	static void RegisterAll(const flecs::world& FlecsWorld)
 	{
-		for (const auto& Fn : Get().GetRegisterFns() | std::views::values)
+		UE_LOGFMT(LogUnrealFlecs, Warning, "Begin flecs components registration");
+		for (const auto& [Struct, Fn] : Get().GetRegisterFns())
 		{
 			Fn(FlecsWorld);
+			UE_LOGFMT(LogUnrealFlecs, Log,"Flecs component {0} registered", Struct->GetName());
 		}
+		UE_LOGFMT(LogUnrealFlecs, Log, "End flecs components registration");
 	}
 	
 	auto GetRegisterFns() const -> const auto&
@@ -134,10 +135,10 @@ private:
 	UFlecs::HashSet<EnqueuedFn> EnqueuedFuncs;
 };
 
-template<typename T>
-struct FFlecsJsonSerializer
+namespace UFlecs
 {
-	static int UStructSerializer(const flecs::serializer* s, const T* Data)
+	template<typename T>
+	int SerializeToJson(const flecs::serializer* s, const T* Data)
 	{
 		FString Json;
 		FJsonObjectConverter::UStructToJsonObjectString<T>(*Data, Json);
@@ -146,12 +147,13 @@ struct FFlecsJsonSerializer
 		const char* Ptr = Src.Get();
 		return s->value(flecs::String, &Ptr);
 	}
-	
-	static void UStructDeserializer(T* Dst, const char* value)
+
+	template<typename T>
+	void DeserializeFromJson(T* Dst, const char* value)
 	{
 		FJsonObjectConverter::JsonObjectStringToUStruct<T>(value, Dst);
 	}
-};
+}
 
 template <typename T>
 struct FRegisterFlecsComponent
@@ -170,32 +172,30 @@ private:
 	static void AddToRegistry(FFlecsTypeRegistry& Registry)
 	{
 		Registry.InsertRegisterFn(TBaseStructure<T>::Get(), &RegisterComponent);
-		UE_LOGFMT(LogUnrealFlecs, Warning, "Flecs component {Comp} registered", ("Comp", Name));
 	}
 	
 	static void RegisterComponent(const flecs::world& FlecsWorld)
 	{
-		auto component = FlecsWorld.component<T>();
+		auto Component = FlecsWorld.component<T>();
 		
 		if (UseDefaultSerializer)
 		{
-			component.opaque(flecs::String)
-			.serialize(&FFlecsJsonSerializer<T>::UStructSerializer)
-			.assign_string(&FFlecsJsonSerializer<T>::UStructDeserializer);
+			Component.opaque(flecs::String)
+			.serialize(UFlecs::SerializeToJson<T>)
+			.assign_string(UFlecs::DeserializeFromJson<T>);
 		}
 
 		if (const UScriptStruct* Struct = TBaseStructure<T>::Get())
 		{
 			FFlecsTypeRegistry& Registry = FFlecsTypeRegistry::Get();
-			
-			Registry.InsertIdFn (Struct, &GetFlecsId);
-			Registry.InsertSetFn(Struct, &SetOnEntity);
-			Registry.InsertAddFn(Struct, &AddToEntity);
-			Registry.InsertGetFn(Struct, &GetFromEntity);
+			Registry.InsertIdFn (Struct, GetFlecsId);
+			Registry.InsertSetFn(Struct, SetOnEntity);
+			Registry.InsertAddFn(Struct, AddToEntity);
+			Registry.InsertGetFn(Struct, GetFromEntity);
 		}
 	}
 	
-	static void SetOnEntity(const flecs::entity& E, const FConstStructView View)
+	static void SetOnEntity(const flecs::entity E, const FConstStructView View)
 	{
 		if (const T* Data = View.GetPtr<const T>())
 		{
@@ -203,12 +203,12 @@ private:
 		}
 	}
 
-	static void AddToEntity(const flecs::entity& E)
+	static void AddToEntity(const flecs::entity E)
 	{
 		E.add<T>();
 	}
 
-	static FConstStructView GetFromEntity(const flecs::entity& E)
+	static FConstStructView GetFromEntity(const flecs::entity E)
 	{
 		return FConstStructView::Make(E.get<T>());
 	}
@@ -221,7 +221,7 @@ private:
 
 /*
  * Performs a plain component registration and stores its UScriptStruct type information.
- * Implements the unreal engine Json serializer for the component.
+ * Implements the Unreal Engine JSON serializer for the component.
  * Does NOT add any flecs traits to the component.
 */
 #define REG_FLECS_COMPONENT(Type) \

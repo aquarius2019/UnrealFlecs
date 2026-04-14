@@ -98,5 +98,5 @@ private:
 	UPROPERTY()
 	uint64 FlecsId = 0;
 
-	flecs::world_t *FlecsWorld;
+	flecs::world FlecsWorld;
 };

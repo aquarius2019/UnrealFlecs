@@ -2,13 +2,13 @@
 
 #include "FlecsEntityPrefab.h"
 
-flecs::entity UFlecsEntityPrefab::CreateInstance(const flecs::world& FlecsWorld, FFlecsPrefabRegistry& Registry) const
+flecs::entity UFlecsEntityPrefab::CreateInstance(const flecs::world& World, FFlecsPrefabRegistry& Registry) const
 {
-	flecs::entity Entity = FlecsWorld.entity();
+	flecs::entity Entity = World.entity();
 
-	if (const flecs::entity Prefab = Registry.GetOrCreate(FlecsWorld, this))
+	if (const flecs::entity Prefab = Registry.GetOrCreate(World, this))
 	{
-		Entity = FlecsWorld.entity().is_a(Prefab);
+		Entity = World.entity().is_a(Prefab);
 	}
 	
 	// Set overriden components
@@ -54,4 +54,26 @@ TArray<FFlecsEntityHandle> UFlecsEntityPrefab::BatchCreateInstanceHandles(const 
 	}
 
 	return Instances;
+}
+
+flecs::entity FFlecsPrefabRegistry::GetOrCreate(const flecs::world& FlecsWorld, const UFlecsEntityPrefab* Asset)
+{
+	flecs::entity Prefab = {};
+	
+	if (!IsValid(Asset)) return Prefab;
+
+	const FPrimaryAssetId AssetId = Asset->GetPrimaryAssetId();
+	
+	if (const auto* Found = Prefabs.Find(AssetId))
+	{
+		Prefab = *Found;
+	}
+
+	if (!Prefab.is_alive())
+	{
+		Prefab = Asset->CreatePrefab(FlecsWorld);
+		Prefabs.Add(AssetId, Prefab);
+	}
+
+	return Prefab;
 }
